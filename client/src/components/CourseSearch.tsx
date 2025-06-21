@@ -101,7 +101,8 @@
 
 // File: frontend/src/components/CourseSearch.tsx
 // File: frontend/src/components/CourseSearch.tsx
-import React, { useEffect, useState } from "react";
+// File: frontend/src/components/CourseSearch.tsx
+import React, { useEffect, useRef, useState } from "react";
 
 const semesterSubjects: Record<string, string[]> = {
   "Semester 1": ["Math 101", "English 101", "Physics 101"],
@@ -114,6 +115,7 @@ const CourseSearch: React.FC = () => {
   const [overview, setOverview] = useState("");
   const [loading, setLoading] = useState(false);
   const [animatedText, setAnimatedText] = useState("");
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const fetchOverview = async () => {
     if (!selectedCourse) return;
@@ -129,9 +131,14 @@ const CourseSearch: React.FC = () => {
         body: JSON.stringify({ course: selectedCourse }),
       });
       const data = await res.json();
-      console.log("Data", data);
-      const text = data.overview || "No overview available.";
-      console.log("text", text);
+      let text = data.overview?.toString().trim() || "No overview available.";
+
+      // Truncate the text after the last full sentence ending with a period
+      const lastPeriodIndex = text.lastIndexOf(".");
+      if (lastPeriodIndex !== -1) {
+        text = text.slice(0, lastPeriodIndex + 1);
+      }
+
       setOverview(text);
     } catch {
       setOverview("Failed to fetch overview. Please try again later.");
@@ -142,14 +149,21 @@ const CourseSearch: React.FC = () => {
 
   useEffect(() => {
     if (!loading && overview) {
-      let index = -1;
-      const interval = setInterval(() => {
-        setAnimatedText((prev) => prev + overview[index]);
-        index++;
-        if (index >= overview.length) clearInterval(interval);
+      setAnimatedText("");
+      let index = 0;
+      intervalRef.current = setInterval(() => {
+        if (index < overview.length) {
+          const char = overview.charAt(index);
+          setAnimatedText((prev) => prev + char);
+          index++;
+        } else {
+          if (intervalRef.current) clearInterval(intervalRef.current);
+        }
       }, 20);
-      return () => clearInterval(interval);
     }
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
   }, [overview, loading]);
 
   const semesterOptions = Object.keys(semesterSubjects);
