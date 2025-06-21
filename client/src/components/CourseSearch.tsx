@@ -100,11 +100,12 @@
 // export default CourseSearch;
 
 // File: frontend/src/components/CourseSearch.tsx
-import React, { useState } from "react";
+// File: frontend/src/components/CourseSearch.tsx
+import React, { useEffect, useState } from "react";
 
 const semesterSubjects: Record<string, string[]> = {
-  "Semester 1": ["Math 1101", "English 1101", "Physics 1101"],
-  "Semester 2": ["Math 1201", "Chemistry 101", "Biology 101"],
+  "Semester 1": ["Math 101", "English 101", "Physics 101"],
+  "Semester 2": ["Math 102", "Chemistry 101", "Biology 101"],
 };
 
 const CourseSearch: React.FC = () => {
@@ -112,11 +113,13 @@ const CourseSearch: React.FC = () => {
   const [selectedCourse, setSelectedCourse] = useState("");
   const [overview, setOverview] = useState("");
   const [loading, setLoading] = useState(false);
+  const [animatedText, setAnimatedText] = useState("");
 
   const fetchOverview = async () => {
     if (!selectedCourse) return;
     setLoading(true);
     setOverview("");
+    setAnimatedText("");
     try {
       const res = await fetch("http://localhost:3001/api/overview", {
         method: "POST",
@@ -126,13 +129,26 @@ const CourseSearch: React.FC = () => {
         body: JSON.stringify({ course: selectedCourse }),
       });
       const data = await res.json();
-      setOverview(data.overview || "No overview available.");
+      const text = data.overview || "No overview available.";
+      setOverview(text);
     } catch {
       setOverview("Failed to fetch overview. Please try again later.");
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (!loading && overview) {
+      let index = 0;
+      const interval = setInterval(() => {
+        setAnimatedText((prev) => prev + overview[index]);
+        index++;
+        if (index >= overview.length) clearInterval(interval);
+      }, 20);
+      return () => clearInterval(interval);
+    }
+  }, [overview, loading]);
 
   const semesterOptions = Object.keys(semesterSubjects);
   const courseOptions = selectedSemester
@@ -152,6 +168,7 @@ const CourseSearch: React.FC = () => {
             setSelectedSemester(e.target.value);
             setSelectedCourse("");
             setOverview("");
+            setAnimatedText("");
           }}
           className="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
         >
@@ -186,13 +203,21 @@ const CourseSearch: React.FC = () => {
         </button>
       </div>
 
-      {overview && (
+      {loading && (
+        <div className="mt-6 p-4 bg-white border-l-4 border-blue-600 rounded-md animate-pulse">
+          <div className="h-4 bg-gray-300 rounded w-3/4 mb-2"></div>
+          <div className="h-4 bg-gray-300 rounded w-full mb-2"></div>
+          <div className="h-4 bg-gray-300 rounded w-5/6"></div>
+        </div>
+      )}
+
+      {animatedText && !loading && (
         <div className="mt-6 p-4 bg-white border-l-4 border-blue-600 rounded-md">
           <h3 className="text-lg font-semibold text-gray-700 mb-2">
             Course Overview
           </h3>
           <p className="text-gray-600 whitespace-pre-wrap leading-relaxed">
-            {overview}
+            {animatedText}
           </p>
         </div>
       )}
