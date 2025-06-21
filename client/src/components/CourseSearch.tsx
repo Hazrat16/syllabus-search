@@ -129,7 +129,9 @@ const CourseSearch: React.FC = () => {
         body: JSON.stringify({ course: selectedCourse }),
       });
       const data = await res.json();
+      console.log("Data", data);
       const text = data.overview || "No overview available.";
+      console.log("text", text);
       setOverview(text);
     } catch {
       setOverview("Failed to fetch overview. Please try again later.");
@@ -140,7 +142,7 @@ const CourseSearch: React.FC = () => {
 
   useEffect(() => {
     if (!loading && overview) {
-      let index = 0;
+      let index = -1;
       const interval = setInterval(() => {
         setAnimatedText((prev) => prev + overview[index]);
         index++;
