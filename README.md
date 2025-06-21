@@ -121,7 +121,7 @@ npm run dev
 
 ## ✨ Credits
 
-Built with ❤️ by [Hazrat Ali](https://github.com/your-username) using OpenAI + Cohere
+Built with ❤️  using OpenAI + Cohere
 
 ---
 
